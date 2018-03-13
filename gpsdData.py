@@ -9,6 +9,7 @@ import time
 import threading
 import json
 import logger
+import publisher
 
 gpsd = None #seting the global variable
  
@@ -37,6 +38,9 @@ if __name__ == '__main__':
   #set backup file, a new one each time that this file is set to run
   ## init the logger
   logger = Logger();
+  ## init the publisher
+  publisher = Publisher()
+
   
   try:
     gpsp.start() # start it up
@@ -71,6 +75,7 @@ if __name__ == '__main__':
       })
 
       logger.backUp(data)
+      publisher.publish_data(str(data))
       time.sleep(3) #set to whatever
  
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
