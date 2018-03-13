@@ -39,7 +39,7 @@ if __name__ == '__main__':
   ## init the logger
   logger = Logger();
   ## init the publisher
-  publisher = Publisher()
+  publisher = publisher.Publisher()
 
   
   try:
