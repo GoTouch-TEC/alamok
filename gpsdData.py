@@ -8,6 +8,7 @@ from time import *
 import time
 import threading
 import json
+import datetime
 
 gpsd = None #seting the global variable
  
@@ -33,6 +34,13 @@ class GpsPoller(threading.Thread):
  
 if __name__ == '__main__':
   gpsp = GpsPoller() # create the thread
+  #set backup file, a new one each time that this file is set to run
+  new_name_file = str(datetime.datetime.now())
+  new_name_file = new_name_file.replace(' ','T')#Setting ISO name fiel
+  new_name_file += 'Z' # append to the end
+  log_file = open(new_name_file,'w')
+
+
   try:
     gpsp.start() # start it up
     while True:
@@ -64,13 +72,16 @@ if __name__ == '__main__':
         'longitude': gpsd.fix.longitude,
         'time utc': gpsd.utc
       })
-      with open('data.json', 'w') as outfile:  
-        json.dump(gpsp.data, outfile)
-      time.sleep(5) #set to whatever
+
+      log_file.write(gpsp.data)  
+      #with open(new_name_file, 'w') as outfile:  
+      #  json.dump(gpsp.data, outfile)
+      time.sleep(3) #set to whatever
  
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
-   
     print "\nKilling Thread..."
     gpsp.running = False
     gpsp.join() # wait for the thread to finish what it's doing
-  print "Done.\nExiting."
+  
+  log_file.close()
+  print "\nDone"
