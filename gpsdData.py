@@ -37,7 +37,7 @@ if __name__ == '__main__':
   gpsp = GpsPoller() # create the thread
   #set backup file, a new one each time that this file is set to run
   ## init the logger
-  logger = Logger();
+  logger = logger.Logger();
   ## init the publisher
   publisher = publisher.Publisher()
 
@@ -74,8 +74,16 @@ if __name__ == '__main__':
         'time utc': gpsd.utc
       })
 
-      logger.backUp(data)
-      publisher.publish_data(str(data))
+      logger.backUp({  
+        'latitude': gpsd.fix.latitude,
+        'longitude': gpsd.fix.longitude,
+        'time utc': gpsd.utc
+      })
+      publisher.publish_data(str({  
+        'latitude': gpsd.fix.latitude,
+        'longitude': gpsd.fix.longitude,
+        'time utc': gpsd.utc
+      }))
       time.sleep(3) #set to whatever
  
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
