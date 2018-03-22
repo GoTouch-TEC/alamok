@@ -65,5 +65,22 @@ class SQL_Lite_Logger:
 			print("Error while closing data base connection")	
 
 
-	def fetchData (self,matcher):
-		print("fetching data")	
+	def fetchFailedData (self):
+		print("\n")
+		data_Failed = self.cursor.execute("SELECT * FROM fail_gps_logs ")
+		data_item = data_Failed.fetchone()
+		while (not(data_item is None)):
+			print(str(data_item))
+			data_item = data_Failed.fetchone()
+
+	def fetchSuccededData (self):
+		print("\n")
+		data_succeded = self.cursor.execute("SELECT * FROM gpslogs ")
+		data_item = data_data_succeded.fetchone()
+		counter = 0
+		while (not(data_item is None)):
+			print(str(data_item))
+			data_item = data_data_succeded.fetchone()
+			counter = counter + 1
+
+	
