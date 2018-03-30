@@ -11,11 +11,6 @@ import SQL_Lite_Logger
 #publisher.join() 
 #init the sql lite logger
 sqllogger = SQL_Lite_Logger.SQL_Lite_Logger()
-
-
-# sets a random values to get the 
-#latitude, longitude, speed, altitude, and the status
-
 for x in xrange(1,100):
 	latitude = 93 + random.random()/88855 # closing to CR
 	longitude = -86 + random.random()/88855 # closing to CR
@@ -23,7 +18,6 @@ for x in xrange(1,100):
 	speed =random.uniform(1, 180) ## km/h
 	altitude =random.uniform(3100, 3600) ##meters
 	sqllogger.backUpData({'date': utils.getTime(),'latitude':latitude, 'longitude': longitude, 'status': status,'speed': speed, 'altitude': altitude})
-	#publisher.publish_data("test")
 
 
 success_data = sqllogger.fetchSuccededData()

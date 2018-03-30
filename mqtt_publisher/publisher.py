@@ -46,15 +46,18 @@ class Publisher (threading.Thread):
 
 	def run(self):
 		try:
-			while True:
+			while self.running:
 				pass
 		except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
-		  print "\nKilling Thread..."
-		  self.running = False
-		  self.join() # wait for the thread to finish what it's doing
+			print "\nKilling Thread..."
+		 	self.running = False
+		 	self.join() # wait for the thread to finish what it's doing
 		
 
 
 	def publish_data(self,data):
 		self.client.publish("fonagotouch",data)
+
+	def stopPublishing(self):
+		self.running = False
 
