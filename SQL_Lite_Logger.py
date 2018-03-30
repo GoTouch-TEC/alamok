@@ -63,24 +63,55 @@ class SQL_Lite_Logger:
 			self.connection.close()
 		except RuntimeError:#catch an error during the last command
 			print("Error while closing data base connection")	
-
-
+			
+	#this function returns a list of tuples, each tuple is a chunk of gps data		
 	def fetchFailedData (self):
 		print("\n")
-		data_Failed = self.cursor.execute("SELECT * FROM fail_gps_logs ")
-		data_item = data_Failed.fetchone()
-		while (not(data_item is None)):
-			print(str(data_item))
-			data_item = data_Failed.fetchone()
+		result = [ ]#define a list of the data chunks
+		data_Failed = self.cursor.execute("SELECT * FROM fail_gps_logs ")#selecet just the failed data
+		data_item = data_Failed.fetchone()#fetch te first chunk of data
+		while (not(data_item is None)):# loop while the cursor is not empty
+			data_item = data_Failed.fetchone()#fetch the ext chunk of data
+			result.append(data_item)# append to the result
+		return result# retun the result
 
+	#this function returns a list of tuples, each tuple is a chunk of failed gps data			
 	def fetchSuccededData (self):
 		print("\n")
-		data_succeded = self.cursor.execute("SELECT * FROM gpslogs ")
-		data_item = data_data_succeded.fetchone()
-		counter = 0
-		while (not(data_item is None)):
-			print(str(data_item))
-			data_item = data_data_succeded.fetchone()
-			counter = counter + 1
+		result = [ ]#define a list of the data chunks
+		data_succeded = self.cursor.execute("SELECT * FROM gpslogs ")#selecet just the succeded data
+		data_item = data_succeded.fetchone()#fetch te first chunk of data
+		while (not(data_item is None)):# loop while the cursor is not empty
+			data_item = data_succeded.fetchone()#fetch the ext chunk of data
+			result.append(data_item)# append to the result
+		return result# retun the result
+
+	#this function cleans the data from GPS_LOG table	
+	def cleanGPS_LOG (self):
+		#delete string query
+		string_query = "DELETE FROM " +self.gps_logs
+		try: 
+			self.cursor.execute(string_query)#executes the query built from string
+			self.connection.commit()#saves changes to local db.
+		except RuntimeError:
+			print("Error during deletion of data base")
+
+	#this function cleans the data from GPS_FAILED_DATA
+	def cleanGPS_FAILED_LOG (self):
+		#delete string query
+		string_query = "DELETE FROM " +self.fail_gps_logs
+		try: 
+			self.cursor.execute(string_query)#executes the query built from string
+			self.connection.commit()#saves changes to local db.
+		except RuntimeError:
+			print("Error during deletion of data base")
+
+	#close the data base
+	def closeLogger(self):
+		try:#tries to close the connection to the data base.
+			self.connection.close()
+		except RuntimeError:
+			#manages the error
+			print("Failed to close the database")	
 
 	

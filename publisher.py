@@ -1,5 +1,7 @@
+import os
 import paho.mqtt.client as mqtt #import the client1
-class Publisher:
+import threading #MultiThreading
+class Publisher (threading.Thread):
 
 	#callback on recieved message
 	def on_message(self, client, userdata, message):
@@ -19,7 +21,11 @@ class Publisher:
 		else:
 			print("Connection failed")
 
+
 	def __init__(self):
+		#init the thread
+		threading.Thread.__init__(self)
+		self.running = True #setting the thread running to true
 		#set the address
 		self.broker_address="m11.cloudmqtt.com"
 		self.serverPort = 13933
@@ -37,6 +43,17 @@ class Publisher:
 		print("connecting to broker")
 		self.client.connect(self.broker_address, port=self.serverPort)
 		self.client.loop_start() #start the loop
+
+	def run(self):
+		try:
+			while True:
+				pass
+		except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
+		  print "\nKilling Thread..."
+		  self.running = False
+		  self.join() # wait for the thread to finish what it's doing
+		
+
 
 	def publish_data(self,data):
 		self.client.publish("fonagotouch",data)
