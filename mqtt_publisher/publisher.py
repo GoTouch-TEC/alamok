@@ -48,6 +48,8 @@ class Publisher (threading.Thread):
 		try:
 			while self.running:
 				pass
+			print("disconnect...")
+			self.client.disconnect()
 		except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
 			print "\nKilling Thread..."
 		 	self.running = False
