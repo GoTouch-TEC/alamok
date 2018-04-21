@@ -1,6 +1,7 @@
 import os
 import paho.mqtt.client as mqtt #import the client1
 import threading #MultiThreading
+import json # to load the config file.
 class Publisher (threading.Thread):
 
 	isConnected = False	
@@ -9,15 +10,18 @@ class Publisher (threading.Thread):
 		#init the thread
 		threading.Thread.__init__(self)
 		self.running = True #setting the thread running to true
+		#reading the config file:
+		config = json.loads(open('mqtt-defaults.json').read())
 		#set the address
-		self.broker_address="m11.cloudmqtt.com"
-		self.serverPort = 13933
-		self.user = "xelgtveu"
-		self.password = "oYgQjqYbuaop"
+
+		self.broker_address=str(config["broker_address"])
+		self.serverPort = config["serverPort"]
+		self.user = str(config["user"])
+		self.password = str(config["password"])
 		self.Connected = False
-		print("creating new instance")
+		print("Is creating a new instance of MQTT publisher")
 		# init the user
-		self.client = mqtt.Client("GPS-GOTOUHC-MODULE") #create new instance
+		self.client = mqtt.Client(str(config["topic"])) #create new instance
 		# Set the password and user.
 		self.client.username_pw_set(self.user, password=self.password)
 		#attach function to callback
@@ -60,7 +64,10 @@ class Publisher (threading.Thread):
 		self.running = False
 
 	def publish_data(self,data):
-		self.client.publish("fonagotouch",data)
+		try:
+			self.client.publish("fonagotouch",data)
+		except Exception: 
+			print("Error publishing")
 
 	def stopPublishing(self):
 		self.running = False

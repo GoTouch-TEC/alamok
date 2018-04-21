@@ -5,7 +5,8 @@ from random import randint
 import time 
 import os
 #init the publisher object
-
+connected = False
+MQTT_publisher = None
 try:
 	MQTT_publisher = publisher.Publisher()#init the object	
 	connected = MQTT_publisher.isConnected# it is connected?
@@ -14,14 +15,19 @@ try:
 	else:
 		print("MQTT publisher is not connected")
 	MQTT_publisher.start()#start the thread
+	
 except Exception:
-	print("MQTT creating the publisher")
+	print(" Error MQTT creating the publisher")
+
 try:
+	counter = 0
 	while connected:
 		time.sleep(2)
 		diction = {'id' : counter}
-		publisher.publish_data(str(diction))
+		MQTT_publisher.publish_data(str(diction))
 		counter = counter +1	
-except(KeyboardInterrupt, SystemExit,Exception): 
-	publisher.stopPublishing()
+except(KeyboardInterrupt, SystemExit,Exception ) as error:
+	if(connected): 
+		MQTT_publisher.stopPublishing()
+	print(error)
 	print("bye")
