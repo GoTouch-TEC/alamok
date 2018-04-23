@@ -15,5 +15,29 @@ Cuando el usuario desee terminar la ejecución de la aplicación solo deberá de
 
 ### Programación con hilos en Python
 [Documentación oficial](https://docs.python.org/2/library/threading.html)
+### JSN CONFIG PARA CLOUD MQTT
+```json
+{
+	"broker_address" : "m11.cloudmqtt.com",
+	"serverPort" : 13933,
+	"user" : "xelgtveu",
+	"password" : "oYgQjqYbuaop",
+	"topic": "GPS-GOTOUHC-MODULE",
+	"auth": true
+
+}
+```
+### JSN CONFIG PARA LOCAL DEVELOPMENT
+```json
+{
+	"broker_address" : "localhost",
+	"serverPort" : 1884,
+	"user" : "xelgtveu",
+	"password" : "oYgQjqYbuaop",
+	"topic": "GPS-GOTOUHC-MODULE",
+	"auth": false
+
+}
+```
 ### Comunicación MQTT
 [Documentación oficial](https://pypi.python.org/pypi/paho-mqtt/1.1#connect-reconnect-disconnect)

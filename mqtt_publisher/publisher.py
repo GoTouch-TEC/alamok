@@ -23,7 +23,9 @@ class Publisher (threading.Thread):
 		# init the user
 		self.client = mqtt.Client(str(config["topic"])) #create new instance
 		# Set the password and user.
-		self.client.username_pw_set(self.user, password=self.password)
+		print(config["auth"])
+		if(config["auth"]): # ask if auth is required
+			self.client.username_pw_set(self.user, password=self.password)
 		#attach function to callback
 		self.client.on_message=self.on_message
 		self.client.on_connect=self.on_connect   

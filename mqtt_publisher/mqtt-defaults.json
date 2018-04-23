@@ -1,8 +1,9 @@
 {
-	"broker_address" : "m11.cloudmqtt.com",
-	"serverPort" : 13933,
+	"broker_address" : "localhost",
+	"serverPort" : 1884,
 	"user" : "xelgtveu",
 	"password" : "oYgQjqYbuaop",
-	"topic": "GPS-GOTOUHC-MODULE"
+	"topic": "GPS-GOTOUHC-MODULE",
+	"auth": false
 
 }
