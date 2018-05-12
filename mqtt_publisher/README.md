@@ -39,5 +39,18 @@ Cuando el usuario desee terminar la ejecución de la aplicación solo deberá de
 
 }
 ```
+
+###JSN CONFIG PARA AWS DEVELOPMENT
+```json
+{
+	"broker_address" : "http://13.59.16.98",
+	"serverPort" : 1884,
+	"user" : "xelgtveu",
+	"password" : "oYgQjqYbuaop",
+	"topic": "GPS-GOTOUHC-MODULE",
+	"auth": false
+
+}
+```
 ### Comunicación MQTT
 [Documentación oficial](https://pypi.python.org/pypi/paho-mqtt/1.1#connect-reconnect-disconnect)
