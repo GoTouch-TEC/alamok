@@ -1,0 +1,9 @@
+{
+	"broker_address" : "",
+	"serverPort" : 1884,
+	"user" : "",
+	"password" : "",
+	"topic": "",
+	"auth": false
+
+}

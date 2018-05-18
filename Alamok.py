@@ -1,25 +1,28 @@
 #! /usr/bin/python
 # Written by Dan Mandle http://dan.mandle.me September 2012
 # License: GPL 2.0
- 
+import sys
 import os
 from gps import *
 from time import *
 import time
 import threading
 import json
-import logger
+sys.path.append("mqtt_publisher/")
 import publisher
+sys.path.append("sql_lite_logger/")
+import logger
+
 
 gpsd = None #seting the global variable
 #init the publisher object
 connected = False
-MQTT_publisher = None 
+MQTT_publisher = None
 os.system('clear') #clear the terminal (optional)
- 
+
 class GpsPoller(threading.Thread):
   #self.data = {}
-  
+
 
   def __init__(self):
     self.data={}
@@ -29,19 +32,19 @@ class GpsPoller(threading.Thread):
     self.current_value = None
     self.running = True #setting the thread running to true
     self.data['coordinates'] = [] # init array in
-    MQTT_publisher = publisher.Publisher()#init the object	
+    MQTT_publisher = publisher.Publisher()#init the object
 	connected = MQTT_publisher.isConnected# it is connected?
 	if(connected):
 		print("MQTT publisher is connected")
 	else:
 		print("MQTT publisher is not connected")
 	MQTT_publisher.start()#start the thread
- 
+
   def run(self):
     global gpsd
     while gpsp.running:
       gpsd.next() #this will continue to loop and grab EACH set of gpsd info to clear the buffer
- 
+
 if __name__ == '__main__':
   gpsp = GpsPoller() # create the thread
   #set backup file, a new one each time that this file is set to run
@@ -53,9 +56,9 @@ if __name__ == '__main__':
     while True:
       #It may take a second or two to get good data
       #print gpsd.fix.latitude,', ',gpsd.fix.longitude,'  Time: ',gpsd.utc
- 
+
       os.system('clear')
- 
+
       print
       print ' GPS reading'
       print '----------------------------------------'
@@ -74,29 +77,29 @@ if __name__ == '__main__':
       print
       print 'sats        ' , gpsd.satellites
 
-      gpsp.data['coordinates'].append({  
+      gpsp.data['coordinates'].append({
         'latitude': gpsd.fix.latitude,
         'longitude': gpsd.fix.longitude,
         'time utc': gpsd.utc
       })
 
-      logger.backUp({  
+      logger.backUp({
         'latitude': gpsd.fix.latitude,
         'longitude': gpsd.fix.longitude,
         'time utc': gpsd.utc
       })
       if(connected):
-        MQTT_publisher.publish_data(str({  
+        MQTT_publisher.publish_data(str({
             'latitude': gpsd.fix.latitude,
             'longitude': gpsd.fix.longitude,
             'time utc': gpsd.utc
         }))
       time.sleep(3) #set to whatever
- 
+
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
     print "\nKilling Thread..."
     gpsp.running = False
     gpsp.join() # wait for the thread to finish what it's doing
-  
+
   logger.closeBackUp()
   print "\nDone"

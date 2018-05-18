@@ -4,7 +4,7 @@ import threading #MultiThreading
 import json # to load the config file.
 class Publisher (threading.Thread):
 
-	isConnected = False	
+	isConnected = False
 
 	def __init__(self):
 		#init the thread
@@ -28,7 +28,7 @@ class Publisher (threading.Thread):
 			self.client.username_pw_set(self.user, password=self.password)
 		#attach function to callback
 		self.client.on_message=self.on_message
-		self.client.on_connect=self.on_connect   
+		self.client.on_connect=self.on_connect
 		print("connecting to broker")
 		try:
 			self.client.connect(self.broker_address, port=self.serverPort)
@@ -49,17 +49,17 @@ class Publisher (threading.Thread):
 		print("message qos=",message.qos)
 		print("message retain flag=",message.retain)
 
-	#callback on recieved message    
+	#callback on recieved message
 	def on_connect(self, client, userdata, flags, rc):
 		if rc == 0:
 			print("Connected to broker")
 			self.Connected = True                #Signal connection
 			print("Subscribing to topic","fonagotouch")
-			self.client.subscribe("fonagotouch") 
+			self.client.subscribe("fonagotouch")
 		else:
 			print("Connection failed")
 			self.__stopThread()
-			
+
 
 	def __stopThread(self):
 		print ("\nKilling Thread...")
@@ -68,7 +68,7 @@ class Publisher (threading.Thread):
 	def publish_data(self,data):
 		try:
 			self.client.publish("fonagotouch",data)
-		except Exception: 
+		except Exception:
 			print("Error publishing")
 
 	def stopPublishing(self):
@@ -80,7 +80,7 @@ class Publisher (threading.Thread):
 			self.client.disconnect()
 			print('disconnected...mqtt')
 		except Exception:
-			print("Error disconnecting client")		
+			print("Error disconnecting client")
 
 	def run(self):
 		try:
@@ -91,7 +91,3 @@ class Publisher (threading.Thread):
 			print "\nKilling Thread..."
 		 	self.running = False
 		 	self.join() # wait for the thread to finish what it's doing
-		
-
-
-	
