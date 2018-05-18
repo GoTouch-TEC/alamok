@@ -1,9 +1,9 @@
 {
-	"broker_address" : "13.59.16.98",
+	"broker_address" : "",
 	"serverPort" : 1884,
-	"user" : "xelgtveu",
-	"password" : "oYgQjqYbuaop",
-	"topic": "GPS-GOTOUHC-MODULE",
+	"user" : "",
+	"password" : "",
+	"topic": "",
 	"auth": false
 
 }
