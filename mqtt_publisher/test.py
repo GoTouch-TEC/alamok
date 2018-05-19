@@ -17,7 +17,6 @@ try:
 		print("MQTT publisher is connected")
 	else:
 		print("MQTT publisher is not connected")
-	MQTT_publisher.start()#start the thread
 
 except Exception:
 	print(" Error MQTT creating the publisher")

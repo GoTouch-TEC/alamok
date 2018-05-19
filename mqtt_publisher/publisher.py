@@ -1,12 +1,10 @@
 import os
 import paho.mqtt.client as mqtt #import the client1
-import threading #MultiThreading
 import json # to load the config file.
-class Publisher (threading.Thread):
+
+class Publisher ():
 
 	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password="", on_publish=None, device_id="" ):
-		#init the thread
-		threading.Thread.__init__(self)
 		self.running = True #setting the thread running to true
 		self.broker_address = broker_address
 		self.broker_port = broker_port
@@ -39,7 +37,6 @@ class Publisher (threading.Thread):
 			self.debug("Fail during connection")
 			self.debug (error)
 			self.isConnected = False
-			self.__stopThread()#stop the thread
 
 
 	#callback on recieved message
@@ -90,15 +87,6 @@ class Publisher (threading.Thread):
 		except Exception:
 			self.debug("Error disconnecting client")
 
-	def run(self):
-		try:
-			while self.running:
-				pass
-			self.__disconnectPublisher()
-		except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
-			self.debug("\nKilling Thread...")
-			self.running = False
-			self.join() # wait for the thread to finish what it's doing
 	def debug(self, *params):
 		if(__debug__):
 			for param in params:

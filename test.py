@@ -26,7 +26,7 @@ def main():
         print(error)
     if conneted_broker:
         print('\033[94mPublisher connected \033[0m')
-        MQTT_publisher.start()#start the thread
+        # MQTT_publisher.start()#start the thread
     else:
         print('\033[91mPublisher not connected \033[0m')
     try:
