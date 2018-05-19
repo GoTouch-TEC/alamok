@@ -25,8 +25,8 @@ class Publisher (threading.Thread):
 		#attach function to callback
 		self.client.on_message=self.on_message
 		self.client.on_connect=self.on_connect
-
 		self.debug("connecting to broker")
+    
 		try:
 			self.client.connect(self.broker_address, port=self.broker_port)
 			self.client.loop_start() #start the loop
@@ -70,6 +70,7 @@ class Publisher (threading.Thread):
 			self.debug("Published:",data)
 		except Exception:
 			self.debug("Error publishing")
+
 
 	def stopPublishing(self):
 		self.running = False
