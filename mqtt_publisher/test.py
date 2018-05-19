@@ -2,21 +2,23 @@
 import publisher
 import random
 from random import randint
-import time 
+import time
 import os
 import datetime
 #init the publisher object
 connected = False
 MQTT_publisher = None
 try:
-	MQTT_publisher = publisher.Publisher()#init the object	
+	# "198.41.30.241" cloudmqtt
+	# 198.41.30.241 iot.eclipse.org
+	MQTT_publisher = publisher.Publisher( "198.41.30.241", 1883, "fonagotouch")#init the object
 	connected = MQTT_publisher.isConnected# it is connected?
 	if(connected):
 		print("MQTT publisher is connected")
 	else:
 		print("MQTT publisher is not connected")
 	MQTT_publisher.start()#start the thread
-	
+
 except Exception:
 	print(" Error MQTT creating the publisher")
 
@@ -33,9 +35,9 @@ try:
 			'dtime': str(datetime.datetime.now())
 		}
 		MQTT_publisher.publish_data(str(diction))
-		counter = counter +1	
+		counter = counter +1
 except(KeyboardInterrupt, SystemExit,Exception ) as error:
-	if(connected): 
+	if(connected):
 		MQTT_publisher.stopPublishing()
 	print(error)
 	print("bye")
