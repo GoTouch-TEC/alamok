@@ -1,14 +1,16 @@
 
 import sqlite3
 from string import Template
+import threading #MultiThreading
 class SQL_Lite_Logger:
 
 	def __init__(self, filename):
 		#set the db connection
-		self.connection = sqlite3.connect(filename)
+		self.connection = sqlite3.connect(filename, check_same_thread = False)
 		self.cursor = self.connection.cursor()# gets a sql lite cursor.
 		self.db_in_progress ="in_progress"#data base for send messages that are successful
 		self.db_successful="sended"# data base for messages that are not successfully sent
+		self.lock = threading.Lock()
 		#tries to create a table
 		try:
 			#creates a database for successfully sent messages
@@ -39,8 +41,10 @@ class SQL_Lite_Logger:
 				try: #tries to insert into gpslogs table
 					#debug print
 					self.debug("Trying to exec: ",string_query)
+					self.lock.acquire()
 					self.cursor.execute(string_query)#executes the query built from template
 					self.connection.commit()#saves changes to local db.
+					self.lock.release()
 				except RuntimeError:#catch a runtime error
 					self.debug('Fail during insertion of gpslogs')
 			except RuntimeError:#catch a runtime error
@@ -51,14 +55,18 @@ class SQL_Lite_Logger:
 
 	def move_to_successful(self,message_id):
 		result = [ ]
+		self.lock.acquire()
 		data = self.cursor.execute("SELECT * FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
+		self.lock.release()
 		data_item = data.fetchone()
 		while (data_item is not None):# loop while the cursor is not empty
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_successful, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
+			self.lock.acquire()
 			self.cursor.execute(string_query)#executes the query built from template
 			self.cursor.execute("DELETE FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
 			self.connection.commit()#saves changes to local db.
+			self.lock.release()
 			# result.append(data_item)
 			data_item = data.fetchone()#fetch the ext chunk of data
 		# return result# retun the result

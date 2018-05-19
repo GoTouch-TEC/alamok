@@ -3,6 +3,7 @@ import random # to create random numbers
 from random import randint# to create random integer
 import time # to get the time
 import os # to get os operations like keyboard typings
+import threading #MultiThreading
 
 sys.path.append("mqtt_publisher/")
 import publisher
@@ -12,7 +13,7 @@ import utils
 
 def main():
     def on_publish(client, userdata, mid):
-        print("move to successful:",mid)
+        # print("move to successful:",mid)
         sqllogger.move_to_successful(mid)
     conneted_broker = False
     running = True
@@ -30,8 +31,11 @@ def main():
     else:
         print('\033[91mPublisher not connected \033[0m')
     try:
+        cont = 0
+        prom = 0
         while running:
-            time.sleep(2)
+            start = time.time()
+            # time.sleep(0.5)
             latitude = 93 + random.random()/88855 # closing to CR
             longitude = -86 + random.random()/88855 # closing to CR
             status = randint(1, 2) ## values {1 or 2}
@@ -40,8 +44,16 @@ def main():
             diction = {'date': utils.getTime(),'latitude':latitude, 'longitude': longitude, 'status': status,'speed': speed, 'altitude': altitude}
             message_id = -1
             if (conneted_broker):
-            	message_id = MQTT_publisher.publish_data(str(diction))
+                message_id = MQTT_publisher.publish_data(str(diction))
+                print(message_id)
             sqllogger.backup(diction, message_id)
+            end = time.time()
+            print("elapsed time",end - start)
+            cont+=1
+            prom+= (end - start)
+            print("prom time:", prom/cont)
+
+
 
     except(KeyboardInterrupt, SystemExit):
         if(conneted_broker):
