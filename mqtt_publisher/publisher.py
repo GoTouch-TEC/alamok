@@ -4,7 +4,7 @@ import threading #MultiThreading
 import json # to load the config file.
 class Publisher (threading.Thread):
 
-	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password=""):
+	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password="", on_publish=None, device_id="" ):
 		#init the thread
 		threading.Thread.__init__(self)
 		self.running = True #setting the thread running to true
@@ -16,8 +16,8 @@ class Publisher (threading.Thread):
 		self.out_topic=out_topic
 		self.in_topic=in_topic
 		# init the user
-		if(in_topic):
-			self.client = mqtt.Client(in_topic) #create new instance
+		if(device_id): #
+			self.client = mqtt.Client(device_id) #create new instance
 		else:
 			self.client = mqtt.Client()
 		if(user): # ask if auth is required
@@ -25,8 +25,11 @@ class Publisher (threading.Thread):
 		#attach function to callback
 		self.client.on_message=self.on_message
 		self.client.on_connect=self.on_connect
+		if(on_publish is not None):
+			self.client.on_publish=on_publish
+
 		self.debug("connecting to broker")
-    
+
 		try:
 			self.client.connect(self.broker_address, port=self.broker_port)
 			self.client.loop_start() #start the loop
@@ -66,10 +69,14 @@ class Publisher (threading.Thread):
 
 	def publish_data(self,data):
 		try:
-			self.client.publish(self.out_topic,data)
+			msg_info = self.client.publish(self.out_topic,data, qos=1)
 			self.debug("Published:",data)
+			return msg_info.mid
 		except Exception:
 			self.debug("Error publishing")
+
+
+
 
 
 	def stopPublishing(self):

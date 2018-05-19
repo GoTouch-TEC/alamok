@@ -17,7 +17,7 @@ for x in range(1,20):
 	status = randint(1, 2) ## values {1 or 2}
 	speed =random.uniform(1, 180) ## km/h
 	altitude =random.uniform(3100, 3600) ##meters
-	sqllogger.back_up({'date': utils.getTime(),'latitude':latitude, 'longitude': longitude, 'status': status,'speed': speed, 'altitude': altitude}, message_id=x)
+	sqllogger.backup({'date': utils.getTime(),'latitude':latitude, 'longitude': longitude, 'status': status,'speed': speed, 'altitude': altitude}, message_id=x)
 for x in range(1,20):
 	data = sqllogger.move_to_successful(x)
 
@@ -30,6 +30,6 @@ print("successful",len(success_data))
 # 	print("entry: ",entry[0])
 # print(len(fail_data))
 
-sqllogger.clean_successful()
-sqllogger.clean_in_progress()
+# sqllogger.clean_successful()
+# sqllogger.clean_in_progress()
 sqllogger.closeLogger()
