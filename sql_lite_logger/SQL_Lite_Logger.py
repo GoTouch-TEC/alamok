@@ -12,10 +12,9 @@ class SQL_Lite_Logger:
 		self.db_failed="failed"
 		self.lock = threading.Lock()
 		try:
-			self.cursor.execute("CREATE TABLE " + self.db_successful+ " (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)")
-			self.cursor.execute("CREATE TABLE " + self.db_in_progress + " (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)")
-			self.cursor.execute("CREATE TABLE " + self.db_failed + " (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)")
-
+			self.cursor.execute('''CREATE TABLE {db} (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)'''.format(db=self.db_successful))
+			self.cursor.execute('''CREATE TABLE {db} (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)'''.format(db=self.db_in_progress))
+			self.cursor.execute('''CREATE TABLE {db} (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)'''.format(db=self.db_failed))
 		except sqlite3.OperationalError:
 			self.debug("Table already exists so table will not be created")
 		self.move_to_failed()
@@ -53,13 +52,13 @@ class SQL_Lite_Logger:
 	def move_to_successful(self,message_id):
 		result = [ ]
 		self.lock.acquire()
-		data = self.cursor.execute("SELECT * FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
+		data = self.cursor.execute('''SELECT * FROM {db} WHERE message_id = {id} '''.format(db = self.db_in_progress,id= str(message_id)))
 		data_item = data.fetchone()
 		while (data_item is not None):
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_successful, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
 			self.cursor.execute(string_query)
-			self.cursor.execute("DELETE FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
+			self.cursor.execute('''DELETE FROM {db} WHERE message_id = {id}'''.format(db=self.db_in_progress, id = str(message_id)))
 			data_item = data.fetchone()
 		self.connection.commit()
 		self.lock.release()
@@ -70,7 +69,7 @@ class SQL_Lite_Logger:
 		self.lock.acquire()
 		for data_item in data:
 			print("data_item[0]:",data_item[0])
-			self.cursor.execute("DELETE FROM "+self.db_in_progress+" WHERE datestamp = '"+data_item[0]+"'")
+			self.cursor.execute('''DELETE FROM {db} WHERE datestamp = '{date}' '''.format(db=self.db_in_progress, date=data_item[0]))
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_failed, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
 			self.cursor.execute(string_query)
@@ -96,7 +95,7 @@ class SQL_Lite_Logger:
 	def fetch(self, db_name):
 		result = [ ]
 		self.lock.acquire()
-		data_succeded = self.cursor.execute("SELECT * FROM "+db_name)
+		data_succeded = self.cursor.execute('''SELECT * FROM {db}'''.format(db=db_name))
 		self.lock.release()
 		data_item = data_succeded.fetchone()
 		while (data_item is not None):
@@ -106,7 +105,7 @@ class SQL_Lite_Logger:
 	def fetch_by_elapsed_time(self, db_name,elapsed_time=0):
 		result = [ ]
 		self.lock.acquire()
-		data_succeded = self.cursor.execute("SELECT * FROM "+db_name+" WHERE datestamp < datetime('now', '-"+ str(elapsed_time) +" seconds')")
+		data_succeded = self.cursor.execute('''SELECT * FROM {db} WHERE datestamp < datetime('now', '-{seconds} seconds')'''.format(db=db_name, seconds=elapsed_time))
 		self.lock.release()
 		data_item = data_succeded.fetchone()
 		while (data_item is not None):
@@ -134,10 +133,9 @@ class SQL_Lite_Logger:
 			print("Error during deletion of data base")
 
 	def clean_by_elapsed_time(self, db_name, elapsed_time=0):
-		string_query = "DELETE FROM " + db_name +" WHERE datestamp < datetime('now', '-"+ str(elapsed_time) +" seconds')"
 		try:
 			self.lock.acquire()
-			self.cursor.execute(string_query)
+			self.cursor.execute('''DELETE FROM {db} WHERE datestamp < datetime('now', '-{seconds} seconds') '''.format(db=db_name, seconds=elapsed_time))
 			self.connection.commit()
 			self.lock.release()
 		except RuntimeError:
