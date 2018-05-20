@@ -76,24 +76,19 @@ if __name__ == '__main__':
       print 'mode        ' , gpsd.fix.mode
       print
       print 'sats        ' , gpsd.satellites
-
-      gpsp.data['coordinates'].append({
+      data={
         'latitude': gpsd.fix.latitude,
         'longitude': gpsd.fix.longitude,
-        'time utc': gpsd.utc
-      })
+        'time_utc': gpsd.utc
+        'speed':    gpsd.speed,
+        'altitude': gpsd.altitude,
 
-      logger.backUp({
-        'latitude': gpsd.fix.latitude,
-        'longitude': gpsd.fix.longitude,
-        'time utc': gpsd.utc
-      })
+      }
+      gpsp.data['coordinates'].append(data)
+
+      logger.backUp(data)
       if(connected):
-        MQTT_publisher.publish_data(str({
-            'latitude': gpsd.fix.latitude,
-            'longitude': gpsd.fix.longitude,
-            'time utc': gpsd.utc
-        }))
+        MQTT_publisher.publish_data(str(data))
       time.sleep(3) #set to whatever
 
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c

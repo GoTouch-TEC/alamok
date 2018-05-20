@@ -13,7 +13,7 @@ import utils
 
 def main():
     def on_publish(client, userdata, mid):
-        # print("move to successful:",mid)
+        print("move to successful:",mid)
         sqllogger.move_to_successful(mid)
     conneted_broker = False
     running = True

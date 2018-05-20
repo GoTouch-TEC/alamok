@@ -1,7 +1,7 @@
 import os
 import paho.mqtt.client as mqtt #import the client1
 import json # to load the config file.
-
+import time
 class Publisher ():
 
 	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password="", on_publish=None, device_id="" ):
@@ -23,13 +23,15 @@ class Publisher ():
 		#attach function to callback
 		self.client.on_message=self.on_message
 		self.client.on_connect=self.on_connect
+		self.client.on_disconnect=self.on_disconnect
 		if(on_publish is not None):
 			self.client.on_publish=on_publish
 
-		self.debug("connecting to broker")
 
+	def start(self):
+		self.debug("connecting to broker")
 		try:
-			self.client.connect(self.broker_address, port=self.broker_port)
+			self.client.connect_async(self.broker_address, port=self.broker_port)
 			self.client.loop_start() #start the loop
 			self.isConnected = True
 
@@ -37,7 +39,6 @@ class Publisher ():
 			self.debug("Fail during connection")
 			self.debug (error)
 			self.isConnected = False
-
 
 	#callback on recieved message
 	def on_message(self, client, userdata, message):
@@ -73,7 +74,18 @@ class Publisher ():
 			self.debug("Error publishing")
 
 
-
+	def on_disconnect(self, client, userdata, rc):
+		if(rc != 0):
+			print("Unexpected disconnection.")
+			while(True):
+				try:
+					self.client.reconnect()
+					print("Connected")
+					# self.client.subscribe(self.in_topic)
+					break
+				except Exception:
+					print("reconnecting")
+					time.sleep(4)
 
 
 	def stopPublishing(self):

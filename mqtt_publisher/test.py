@@ -8,18 +8,20 @@ import datetime
 #init the publisher object
 connected = False
 MQTT_publisher = None
-try:
-	# "198.41.30.241" cloudmqtt
-	# 198.41.30.241 iot.eclipse.org
-	MQTT_publisher = publisher.Publisher( "198.41.30.241", 1883, "fonagotouch")#init the object
-	connected = MQTT_publisher.isConnected# it is connected?
-	if(connected):
-		print("MQTT publisher is connected")
-	else:
-		print("MQTT publisher is not connected")
+# try:
+# "198.41.30.241" cloudmqtt
+# 198.41.30.241 iot.eclipse.org
+# MQTT_publisher = publisher.Publisher( "198.41.30.241", 1883, "fonagotouch")#init the object
+MQTT_publisher = publisher.Publisher( "localhost", 1883, "fonagotouch",device_id="publisher")#init the object
+MQTT_publisher.start()
+connected = MQTT_publisher.isConnected# it is connected?
+if(connected):
+	print("MQTT publisher is connected")
+else:
+	print("MQTT publisher is not connected")
 
-except Exception:
-	print(" Error MQTT creating the publisher")
+# except Exception:
+# 	print(" Error MQTT creating the publisher")
 
 try:
 	counter = 0
