@@ -30,6 +30,6 @@ print("successful",len(success_data))
 # 	print("entry: ",entry[0])
 # print(len(fail_data))
 
-# sqllogger.clean_successful()
+sqllogger.clean_successful()
 # sqllogger.clean_in_progress()
-sqllogger.closeLogger()
+sqllogger.close_logger()

@@ -5,21 +5,19 @@ import threading #MultiThreading
 class SQL_Lite_Logger:
 
 	def __init__(self, filename):
-		#set the db connection
 		self.connection = sqlite3.connect(filename, check_same_thread = False)
-		self.cursor = self.connection.cursor()# gets a sql lite cursor.
-		self.db_in_progress ="in_progress"#data base for send messages that are successful
-		self.db_successful="sended"# data base for messages that are not successfully sent
+		self.cursor = self.connection.cursor()
+		self.db_in_progress ="in_progress"
+		self.db_successful="sended"
+		self.db_failed="failed"
 		self.lock = threading.Lock()
-		#tries to create a table
 		try:
-			#creates a database for successfully sent messages
-			self.cursor.execute("CREATE TABLE "+self.db_successful+ " (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)")
-			#creates a database for fault sent messages
-			self.cursor.execute("CREATE TABLE " +self.db_in_progress + " (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)")
+			self.cursor.execute('''CREATE TABLE {db} (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)'''.format(db=self.db_successful))
+			self.cursor.execute('''CREATE TABLE {db} (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)'''.format(db=self.db_in_progress))
+			self.cursor.execute('''CREATE TABLE {db} (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int)'''.format(db=self.db_failed))
 		except sqlite3.OperationalError:
 			self.debug("Table already exists so table will not be created")
-
+		self.move_to_failed()
 
 	#{ 'date': 'datasamp'
 	#  'latitude': 'double number'
@@ -30,105 +28,124 @@ class SQL_Lite_Logger:
 		self.debug("Saving gps data to in_progress database")
 		if (data is not None):
 			try:
-				#init string query
 				string_query = ""
-				#creates a template of the command
 				query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 				if(message_id == 0):
 					string_query = query.substitute(dbName=self.db_successful, date=data['date'] , latitude=data['latitude'], longitude=data['longitude'], speed=data['speed'],altitude=data['altitude'], message_id=message_id )
+				if(message_id == -1):
+					string_query = query.substitute(dbName=self.db_failed, date=data['date'] , latitude=data['latitude'], longitude=data['longitude'], speed=data['speed'],altitude=data['altitude'], message_id=message_id )
 				else:
 					string_query = query.substitute(dbName=self.db_in_progress, date=data['date'] , latitude=data['latitude'], longitude=data['longitude'], speed=data['speed'],altitude=data['altitude'], message_id=message_id )
-				try: #tries to insert into gpslogs table
-					#debug print
+				try:
 					self.debug("Trying to exec: ",string_query)
 					self.lock.acquire()
-					self.cursor.execute(string_query)#executes the query built from template
-					self.connection.commit()#saves changes to local db.
+					self.cursor.execute(string_query)
+					self.connection.commit()
 					self.lock.release()
-				except RuntimeError:#catch a runtime error
-					self.debug('Fail during insertion of gpslogs')
-			except RuntimeError:#catch a runtime error
-				self.debug("Error creating the command")
-		else:#param data is null
+				except RuntimeError:
+					print('Fail during insertion of gpslogs')
+			except RuntimeError:
+				print("Error creating the command")
+		else:
 			self.debug("Param data is null")
-
 
 	def move_to_successful(self,message_id):
 		result = [ ]
 		self.lock.acquire()
-		data = self.cursor.execute("SELECT * FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
-		self.lock.release()
+		data = self.cursor.execute('''SELECT * FROM {db} WHERE message_id = {id} '''.format(db = self.db_in_progress,id= str(message_id)))
 		data_item = data.fetchone()
-		while (data_item is not None):# loop while the cursor is not empty
+		while (data_item is not None):
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_successful, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
-			self.lock.acquire()
-			self.cursor.execute(string_query)#executes the query built from template
-			self.cursor.execute("DELETE FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
-			self.connection.commit()#saves changes to local db.
-			self.lock.release()
-			# result.append(data_item)
-			data_item = data.fetchone()#fetch the ext chunk of data
-		# return result# retun the result
+			self.cursor.execute(string_query)
+			self.cursor.execute('''DELETE FROM {db} WHERE message_id = {id}'''.format(db=self.db_in_progress, id = str(message_id)))
+			data_item = data.fetchone()
+		self.connection.commit()
+		self.lock.release()
 
+	def move_to_failed(self, elapsed_time=0):
+		data = self.fetch_by_elapsed_time(self.db_in_progress, elapsed_time)
+		# self.clean_by_elapsed_time(self.db_in_progress, elapsed_time)
+		self.lock.acquire()
+		for data_item in data:
+			print("data_item[0]:",data_item[0])
+			self.cursor.execute('''DELETE FROM {db} WHERE datestamp = '{date}' '''.format(db=self.db_in_progress, date=data_item[0]))
+			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
+			string_query = query.substitute(dbName=self.db_failed, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
+			self.cursor.execute(string_query)
+		self.connection.commit()
+		self.lock.release()
 
-	#This function closes the data base connection.
 	def close(self):
 		self.debug("Close BackUp Data Base")
-		try:#tries to close the data base
+		try:
 			self.connection.close()
-		except RuntimeError:#catch an error during the last command
+		except RuntimeError:
 			self.debug("Error while closing data base connection")
 
-	#this function returns a list of tuples, each tuple is a chunk of gps data
 	def fetch_in_progress(self):
-		self.debug("\n")
-		result = [ ]#define a list of the data chunks
-		data_Failed = self.cursor.execute("SELECT * FROM "+ self.db_in_progress )#selecet just the failed data
-		data_item = data_Failed.fetchone()#fetch te first chunk of data
-		while (not(data_item is None)):# loop while the cursor is not empty
-			data_item = data_Failed.fetchone()#fetch the ext chunk of data
-			result.append(data_item)# append to the result
-		return result# retun the result
+		return self.fetch(self.db_in_progress)
 
-	#this function returns a list of tuples, each tuple is a chunk of failed gps data
 	def fetch_successful(self):
-		print("\n")
-		result = [ ]#define a list of the data chunks
-		data_succeded = self.cursor.execute("SELECT * FROM "+self.db_successful)#selecet just the succeded data
-		data_item = data_succeded.fetchone()#fetch te first chunk of data
-		while (data_item is not None):# loop while the cursor is not empty
-			data_item = data_succeded.fetchone()#fetch the ext chunk of data
-			result.append(data_item)# append to the result
-		return result# retun the result
+		return self.fetch(self.db_successful)
 
-	#this function cleans the data from GPS_LOG table
-	def clean_successful (self):
-		#delete string query
-		string_query = "DELETE FROM " +self.db_successful
+	def fetch_failed(self):
+		return self.fetch(self.db_failed)
+
+	def fetch(self, db_name):
+		result = [ ]
+		self.lock.acquire()
+		data_succeded = self.cursor.execute('''SELECT * FROM {db}'''.format(db=db_name))
+		self.lock.release()
+		data_item = data_succeded.fetchone()
+		while (data_item is not None):
+			result.append(data_item)
+			data_item = data_succeded.fetchone()
+		return result
+	def fetch_by_elapsed_time(self, db_name,elapsed_time=0):
+		result = [ ]
+		self.lock.acquire()
+		data_succeded = self.cursor.execute('''SELECT * FROM {db} WHERE datestamp < datetime('now', '-{seconds} seconds')'''.format(db=db_name, seconds=elapsed_time))
+		self.lock.release()
+		data_item = data_succeded.fetchone()
+		while (data_item is not None):
+			result.append(data_item)
+			data_item = data_succeded.fetchone()
+		return result
+
+	def clean_successful(self):
+		self.clean(self.db_successful)
+
+	def clean_in_progress(self):
+		self.clean(self.db_in_progress)
+
+	def clean_failed(self):
+		self.clean(self.db_failed)
+
+	def clean(self, db_name):
+		string_query = "DELETE FROM " + db_name
 		try:
-			self.cursor.execute(string_query)#executes the query built from string
-			self.connection.commit()#saves changes to local db.
+			self.lock.acquire()
+			self.cursor.execute(string_query)
+			self.connection.commit()
+			self.lock.release()
 		except RuntimeError:
-			self.debug("Error during deletion of data base")
+			print("Error during deletion of data base")
 
-	#this function cleans the data from GPS_FAILED_DATA
-	def clean_in_progress (self):
-		#delete string query
-		string_query = "DELETE FROM " +self.db_in_progress
+	def clean_by_elapsed_time(self, db_name, elapsed_time=0):
 		try:
-			self.cursor.execute(string_query)#executes the query built from string
-			self.connection.commit()#saves changes to local db.
+			self.lock.acquire()
+			self.cursor.execute('''DELETE FROM {db} WHERE datestamp < datetime('now', '-{seconds} seconds') '''.format(db=db_name, seconds=elapsed_time))
+			self.connection.commit()
+			self.lock.release()
 		except RuntimeError:
-			self.debug("Error during deletion of data base")
+			print("Error during deletion of data base")
 
-	#close the data base
-	def closeLogger(self):
-		try:#tries to close the connection to the data base.
+	def close_logger(self):
+		try:
 			self.connection.close()
 		except RuntimeError:
-			#manages the error
-			self.debug("Failed to close the database")
+			print("Failed to close the database")
 
 	def debug(self, *params):
 		if(__debug__):
