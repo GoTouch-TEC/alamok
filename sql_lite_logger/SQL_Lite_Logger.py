@@ -33,6 +33,8 @@ class SQL_Lite_Logger:
 				query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 				if(message_id == 0):
 					string_query = query.substitute(dbName=self.db_successful, date=data['date'] , latitude=data['latitude'], longitude=data['longitude'], speed=data['speed'],altitude=data['altitude'], message_id=message_id )
+				if(message_id == -1):
+					string_query = query.substitute(dbName=self.db_failed, date=data['date'] , latitude=data['latitude'], longitude=data['longitude'], speed=data['speed'],altitude=data['altitude'], message_id=message_id )
 				else:
 					string_query = query.substitute(dbName=self.db_in_progress, date=data['date'] , latitude=data['latitude'], longitude=data['longitude'], speed=data['speed'],altitude=data['altitude'], message_id=message_id )
 				try:
@@ -42,9 +44,9 @@ class SQL_Lite_Logger:
 					self.connection.commit()
 					self.lock.release()
 				except RuntimeError:
-					self.debug('Fail during insertion of gpslogs')
+					print('Fail during insertion of gpslogs')
 			except RuntimeError:
-				self.debug("Error creating the command")
+				print("Error creating the command")
 		else:
 			self.debug("Param data is null")
 
@@ -52,29 +54,28 @@ class SQL_Lite_Logger:
 		result = [ ]
 		self.lock.acquire()
 		data = self.cursor.execute("SELECT * FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
-		self.lock.release()
 		data_item = data.fetchone()
 		while (data_item is not None):
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_successful, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
-			self.lock.acquire()
 			self.cursor.execute(string_query)
 			self.cursor.execute("DELETE FROM " + self.db_in_progress + " WHERE message_id = "+str(message_id))
-			self.connection.commit()
-			self.lock.release()
 			data_item = data.fetchone()
+		self.connection.commit()
+		self.lock.release()
 
-	def move_to_failed(self):
-		data=self.fetch_in_progress()
-		print("in_progress len: ",len(data))
+	def move_to_failed(self, elapsed_time=0):
+		data = self.fetch_by_elapsed_time(self.db_in_progress, elapsed_time)
+		# self.clean_by_elapsed_time(self.db_in_progress, elapsed_time)
 		self.lock.acquire()
 		for data_item in data:
+			print("data_item[0]:",data_item[0])
+			self.cursor.execute("DELETE FROM "+self.db_in_progress+" WHERE datestamp = '"+data_item[0]+"'")
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_failed, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
 			self.cursor.execute(string_query)
 		self.connection.commit()
 		self.lock.release()
-		self.clean_in_progress()
 
 	def close(self):
 		self.debug("Close BackUp Data Base")
@@ -102,6 +103,16 @@ class SQL_Lite_Logger:
 			result.append(data_item)
 			data_item = data_succeded.fetchone()
 		return result
+	def fetch_by_elapsed_time(self, db_name,elapsed_time=0):
+		result = [ ]
+		self.lock.acquire()
+		data_succeded = self.cursor.execute("SELECT * FROM "+db_name+" WHERE datestamp < datetime('now', '-"+ str(elapsed_time) +" seconds')")
+		self.lock.release()
+		data_item = data_succeded.fetchone()
+		while (data_item is not None):
+			result.append(data_item)
+			data_item = data_succeded.fetchone()
+		return result
 
 	def clean_successful(self):
 		self.clean(self.db_successful)
@@ -120,13 +131,23 @@ class SQL_Lite_Logger:
 			self.connection.commit()
 			self.lock.release()
 		except RuntimeError:
-			self.debug("Error during deletion of data base")
+			print("Error during deletion of data base")
+
+	def clean_by_elapsed_time(self, db_name, elapsed_time=0):
+		string_query = "DELETE FROM " + db_name +" WHERE datestamp < datetime('now', '-"+ str(elapsed_time) +" seconds')"
+		try:
+			self.lock.acquire()
+			self.cursor.execute(string_query)
+			self.connection.commit()
+			self.lock.release()
+		except RuntimeError:
+			print("Error during deletion of data base")
 
 	def close_logger(self):
 		try:
 			self.connection.close()
 		except RuntimeError:
-			self.debug("Failed to close the database")
+			print("Failed to close the database")
 
 	def debug(self, *params):
 		if(__debug__):
