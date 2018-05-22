@@ -68,7 +68,7 @@ class SQL_Lite_Logger:
 		# self.clean_by_elapsed_time(self.db_in_progress, elapsed_time)
 		self.lock.acquire()
 		for data_item in data:
-			print("data_item[0]:",data_item[0])
+			self.debug("data_item[0]:",data_item[0])
 			self.cursor.execute('''DELETE FROM {db} WHERE datestamp = '{date}' '''.format(db=self.db_in_progress, date=data_item[0]))
 			query = Template("INSERT INTO $dbName VALUES ('$date',$latitude,$longitude,$speed,$altitude, $message_id)")
 			string_query = query.substitute(dbName=self.db_failed, date=data_item[0] , latitude=data_item[1] , longitude=data_item[2] , speed=data_item[3] ,altitude=data_item[4] , message_id=data_item[5]  )
