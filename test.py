@@ -19,13 +19,15 @@ def main():
     running = True
     sqllogger = SQL_Lite_Logger.SQL_Lite_Logger("test.db")
 	#init the publisher object
+    MQTT_publisher = publisher.Publisher('iot.eclipse.org', out_topic="fonagotouch", on_publish=on_publish)#init the object
+    MQTT_publisher.start()
+
     try:
-        MQTT_publisher = publisher.Publisher('iot.eclipse.org', out_topic="fonagotouch", on_publish=on_publish)#init the object
-        conneted_broker = MQTT_publisher.isConnected# it is connected?
+        MQTT_publisher.start()
     except Exception as error:
         print( '\033[91mCannot create the publisher \033[0m')
         print(error)
-    if conneted_broker:
+    if MQTT_publisher.status():
         print('\033[94mPublisher connected \033[0m')
         # MQTT_publisher.start()#start the thread
     else:
@@ -34,6 +36,8 @@ def main():
         cont = 0
         prom = 0
         while running:
+            if(not MQTT_publisher.status()):
+                MQTT_publisher.start()
             start = time.time()
             # time.sleep(0.5)
             latitude = 93 + random.random()/88855 # closing to CR
@@ -43,21 +47,23 @@ def main():
             altitude =random.uniform(3100, 3600) ##meters
             diction = {'date': utils.getTime(),'latitude':latitude, 'longitude': longitude, 'status': status,'speed': speed, 'altitude': altitude}
             message_id = -1
-            if (conneted_broker):
+            print("Connection status:",MQTT_publisher.status())
+            print("Client status:",MQTT_publisher.client._state)
+            if (MQTT_publisher.status()):
                 message_id = MQTT_publisher.publish_data(str(diction))
-                print(message_id)
+                # print(message_id)
             sqllogger.backup(diction, message_id)
             end = time.time()
-            print("elapsed time",end - start)
+            # print("elapsed time",end - start)
             cont+=1
             prom+= (end - start)
-            print("prom time:", prom/cont)
+            # print("prom time:", prom/cont)
 
 
 
     except(KeyboardInterrupt, SystemExit):
         if(conneted_broker):
-            MQTT_publisher.stopPublishing()
+            MQTT_publisher.stop()
         running = False
         print("bye")
 main()

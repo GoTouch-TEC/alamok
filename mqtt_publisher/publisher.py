@@ -5,22 +5,20 @@ import time
 class Publisher ():
 
 	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password="", on_publish=None, device_id="" ):
-		self.running = True #setting the thread running to true
 		self.broker_address = broker_address
 		self.broker_port = broker_port
 		self.user = user
 		self.password = password
-		self.isConnected = False
+
 		self.out_topic=out_topic
 		self.in_topic=in_topic
-		# init the user
-		if(device_id): #
-			self.client = mqtt.Client(device_id) #create new instance
+
+		if(device_id):
+			self.client = mqtt.Client(device_id)
 		else:
 			self.client = mqtt.Client()
-		if(user): # ask if auth is required
+		if(user):
 			self.client.username_pw_set(self.user, password=self.password)
-		#attach function to callback
 		self.client.on_message=self.on_message
 		self.client.on_connect=self.on_connect
 		self.client.on_disconnect=self.on_disconnect
@@ -33,12 +31,10 @@ class Publisher ():
 		try:
 			self.client.connect_async(self.broker_address, port=self.broker_port)
 			self.client.loop_start() #start the loop
-			self.isConnected = True
 
 		except Exception as error:
 			self.debug("Fail during connection")
 			self.debug (error)
-			self.isConnected = False
 
 	#callback on recieved message
 	def on_message(self, client, userdata, message):
@@ -48,22 +44,12 @@ class Publisher ():
 		self.debug("message qos=",message.qos)
 		self.debug("message retain flag=",message.retain)
 
-	#callback on recieved message
 	def on_connect(self, client, userdata, flags, rc):
 		if rc == 0:
 			self.debug("Connected to broker")
-			self.isConnected = True                #Signal connection
-			if(self.in_topic):
-				self.debug("Subscribing to topic", self.in_topic)
-				self.client.subscribe(self.in_topic)
 		else:
 			self.debug("Connection failed")
-			self.__stopThread()
 
-
-	def __stopThread(self):
-		self.debug("Killing Thread...")
-		self.running = False
 
 	def publish_data(self,data):
 		try:
@@ -76,28 +62,22 @@ class Publisher ():
 
 	def on_disconnect(self, client, userdata, rc):
 		if(rc != 0):
-			print("Unexpected disconnection.")
-			while(True):
-				try:
-					self.client.reconnect()
-					print("Connected")
-					# self.client.subscribe(self.in_topic)
-					break
-				except Exception:
-					print("reconnecting")
-					time.sleep(4)
+			self.debug("Unexpected disconnection.")
 
 
-	def stopPublishing(self):
-		self.running = False
-
-	def __disconnectPublisher(self):
+	def stop(self):
 		self.debug("disconnect...mqtt")
 		try:
 			self.client.disconnect()
 			self.debug('disconnected...mqtt')
+			self.client.loop_stop()
 		except Exception:
 			self.debug("Error disconnecting client")
+	def status(self):
+		state = False
+		if(self.client._state == 1):
+			state = True
+		return state
 
 	def debug(self, *params):
 		if(__debug__):
