@@ -1,6 +1,7 @@
 #! /usr/bin/python
 # Written by Dan Mandle http://dan.mandle.me September 2012
 # License: GPL 2.0
+from __future__ import print_function
 import sys
 import os
 from gps import *
@@ -13,7 +14,6 @@ import publisher
 sys.path.append("../sql_lite_logger/")
 import SQL_Lite_Logger
 import utils
-from __future__ import print_function
 
 class GpsdMannager(threading.Thread):
     def __init__(self):
@@ -62,7 +62,7 @@ class GpsLogger(threading.Thread):
         while (self.running):
             if(not self.publisher.status()):
                 self.publisher.start()
-            data = {'deviceId':self.device_id,'date_utc': utils.getTime(),'latitude': gpsd.fix().latitude, 'longitude': gpsd.fix().longitude, ,'speed': gpsd.fix().speed, 'altitude': gpsd.fix().altitude}
+            data = {'deviceId':self.device_id,'date_utc': utils.getTime(),'latitude': gpsd.fix().latitude, 'longitude': gpsd.fix().longitude ,'speed': gpsd.fix().speed, 'altitude': gpsd.fix().altitude}
                 # jalar data
             message_id = -1
             if (MQTT_publisher.status()):
