@@ -59,6 +59,7 @@ class GpsLogger(threading.Thread):
 
     def run(self):
         self.publisher.start()
+        self.running=True
         while (self.running):
             if(not self.publisher.status()):
                 self.publisher.start()

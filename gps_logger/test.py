@@ -9,7 +9,6 @@ try:
         pass
 
 except(KeyboardInterrupt, SystemExit,Exception ) as error:
-	if(connected):
-		gps_log.stop()
+	gps_log.stop()
 	print(error)
 	print("bye")
