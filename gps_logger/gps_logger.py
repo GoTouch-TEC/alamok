@@ -33,6 +33,7 @@ class GpsdMannager(threading.Thread):
             self.data['speed']=self.gpsd_thread.data_stream.speed
             self.data['altitude']=self.gpsd_thread.data_stream.alt
             self.data['satellites']=self.gpsd_thread.data_stream.satellites
+            time.sleep(0.05)
     def fix(self):
         return self.gpsd.fix
     def utc(self):
