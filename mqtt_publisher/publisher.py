@@ -1,10 +1,11 @@
+from __future__ import print_function
 import os
 import paho.mqtt.client as mqtt #import the client1
 import json # to load the config file.
 import time
 class Publisher ():
 
-	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password="", on_publish=None, device_id="" ):
+	def __init__(self, broker_address, broker_port=1883, out_topic="", in_topic="", user="", password="", device_id="",on_publish=None):
 		self.broker_address = broker_address
 		self.broker_port = broker_port
 		self.user = user

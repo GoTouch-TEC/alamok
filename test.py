@@ -59,8 +59,6 @@ def main():
             prom+= (end - start)
             # print("prom time:", prom/cont)
 
-
-
     except(KeyboardInterrupt, SystemExit):
         if(conneted_broker):
             MQTT_publisher.stop()

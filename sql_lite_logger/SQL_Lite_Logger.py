@@ -1,4 +1,4 @@
-
+from __future__ import print_function
 import sqlite3
 from string import Template
 import threading #MultiThreading
