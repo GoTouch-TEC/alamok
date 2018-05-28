@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os
 import paho.mqtt.client as mqtt #import the client1
 import json # to load the config file.

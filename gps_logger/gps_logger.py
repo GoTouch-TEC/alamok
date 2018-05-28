@@ -1,10 +1,9 @@
 #! /usr/bin/python
 # Written by Dan Mandle http://dan.mandle.me September 2012
 # License: GPL 2.0
-from __future__ import print_function
 import sys
 import os
-from gps import *
+from gps3.agps3threaded import AGPS3mechanism
 from time import *
 import time
 import threading
@@ -18,15 +17,22 @@ import math
 
 class GpsdMannager(threading.Thread):
     def __init__(self):
-        self.gpsd=gps(mode=WATCH_ENABLE)
+        self.gpsd_thread=AGPS3mechanism()
+        self.gpsd_thread.stream_data()
         self.running = False
         threading.Thread.__init__(self)
         self.start()
+        self.data={'latitude':0,'longitude':0,'speed':0,'altitude':0}
 
     def run(self):
         self.running=True
+        self.gpsd_thread.run_thread()
         while self.running:
-            self.gpsd.next()
+            self.data['latitude']=self.gpsd_thread.data_stream.lat
+            self.data['longitude']=self.gpsd_thread.data_stream.lon
+            self.data['speed']=self.gpsd_thread.data_stream.speed
+            self.data['altitude']=self.gpsd_thread.data_stream.alt
+            self.data['satellites']=self.gpsd_thread.data_stream.satellites
     def fix(self):
         return self.gpsd.fix
     def utc(self):
@@ -53,10 +59,10 @@ class GpsLogger(threading.Thread):
         self.logger.move_to_successful(mid)
 
     def debug(self, *params):
-		if(__debug__):
-			for param in params:
-				print(param, end=' ')
-			print("")
+        if(__debug__):
+            for param in params:
+                print(param, end=' ')
+                print("")
 
     def run(self):
         self.publisher.start()
@@ -64,13 +70,17 @@ class GpsLogger(threading.Thread):
         while (self.running):
             if(not self.publisher.status()):
                 self.publisher.start()
-            data = {'deviceId':self.device_id,'date': utils.getTime(),'latitude': self.gpsd.fix().latitude, 'longitude': self.gpsd.fix().longitude ,'speed': self.gpsd.fix().speed, 'altitude': self.gpsd.fix().altitude}
-                # jalar data
-            if(not math.isnan(data["speed"])):
+            # data = {'deviceId':self.device_id,'date': utils.getTime(),'latitude': self.gpsd.data["latitude"], 'longitude': self.gpsd.data["longitude"] ,'speed': self.gpsd.fix().speed, 'altitude': self.gpsd.fix().altitude}
+            data =  self.gpsd.data
+            data['deviceId']=self.device_id
+            data['date']=utils.getTime()
+            if(data['latitude']!="n/a"):
                 message_id = -1
                 if (self.publisher.status()):
                     message_id = self.publisher.publish_data(str(data))
                 self.logger.backup(data, message_id)
+            else:
+                self.debug("GPS data error:", data)
             time.sleep(self.refresh_time)
     def stop(self):
         self.gpsd.stop()
