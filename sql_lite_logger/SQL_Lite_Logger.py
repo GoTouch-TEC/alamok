@@ -2,6 +2,7 @@
 import sqlite3
 from string import Template
 import threading #MultiThreading
+from __future__ import print_function
 class SQL_Lite_Logger:
 
 	def __init__(self, filename):

@@ -13,6 +13,7 @@ import publisher
 sys.path.append("../sql_lite_logger/")
 import SQL_Lite_Logger
 import utils
+from __future__ import print_function
 
 class GpsdMannager(threading.Thread):
     def __init__(self):
@@ -35,7 +36,7 @@ class GpsdMannager(threading.Thread):
         self.running=False
 
 class GpsLogger(threading.Thread):
-    def __init__(self, mqtt_config, db_filename, device_id:"Alamok" ,refresh_time=3):
+    def __init__(self, mqtt_config, db_filename, device_id="Alamok" ,refresh_time=3):
         self.running = False
         self.refresh_time=refresh_time
         self.device_id = device_id

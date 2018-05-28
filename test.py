@@ -5,9 +5,9 @@ import time # to get the time
 import os # to get os operations like keyboard typings
 import threading #MultiThreading
 
-sys.path.append("../mqtt_publisher/")
+sys.path.append("mqtt_publisher/")
 import publisher
-sys.path.append("../sql_lite_logger/")
+sys.path.append("sql_lite_logger/")
 import SQL_Lite_Logger
 import utils
 
