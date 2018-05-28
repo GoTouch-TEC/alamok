@@ -14,6 +14,7 @@ import publisher
 sys.path.append("../sql_lite_logger/")
 import SQL_Lite_Logger
 import utils
+import math
 
 class GpsdMannager(threading.Thread):
     def __init__(self):
@@ -30,9 +31,9 @@ class GpsdMannager(threading.Thread):
         return self.gpsd.fix
     def utc(self):
         return self.gpsd.utc
-    def satellites():
+    def satellites(self):
         return self.gpsd.satellites
-    def stop():
+    def stop(self):
         self.running=False
 
 class GpsLogger(threading.Thread):
@@ -47,7 +48,7 @@ class GpsLogger(threading.Thread):
             broker_port=mqtt_config["broker_port"],out_topic= mqtt_config["out_topic"],
             in_topic=mqtt_config["in_topic"], user=mqtt_config["user"], password=mqtt_config["password"], device_id=mqtt_config["device_id"],on_publish=self.on_publish)
 
-    def on_publish(client, userdata, mid):
+    def on_publish(self,client, userdata, mid):
         self.debug("move to successful:",mid)
         self.logger.move_to_successful(mid)
 
@@ -63,13 +64,14 @@ class GpsLogger(threading.Thread):
         while (self.running):
             if(not self.publisher.status()):
                 self.publisher.start()
-            data = {'deviceId':self.device_id,'date_utc': utils.getTime(),'latitude': gpsd.fix().latitude, 'longitude': gpsd.fix().longitude ,'speed': gpsd.fix().speed, 'altitude': gpsd.fix().altitude}
+            data = {'deviceId':self.device_id,'date': utils.getTime(),'latitude': self.gpsd.fix().latitude, 'longitude': self.gpsd.fix().longitude ,'speed': self.gpsd.fix().speed, 'altitude': self.gpsd.fix().altitude}
                 # jalar data
-            message_id = -1
-            if (MQTT_publisher.status()):
-                message_id = MQTT_publisher.publish_data(str(data))
-            sqllogger.backup(diction, message_id)
+            if(not math.isnan(data["speed"])):
+                message_id = -1
+                if (self.publisher.status()):
+                    message_id = self.publisher.publish_data(str(data))
+                self.logger.backup(data, message_id)
             time.sleep(self.refresh_time)
-    def stop():
+    def stop(self):
         self.gpsd.stop()
         self.running=False
