@@ -9,9 +9,9 @@ from time import *
 import time
 import threading
 import json
-sys.path.append("../mqtt_publisher/")
+sys.path.append("mqtt_publisher/")
 import publisher
-sys.path.append("../sql_lite_logger/")
+sys.path.append("sql_lite_logger/")
 import SQL_Lite_Logger
 import utils
 import math
