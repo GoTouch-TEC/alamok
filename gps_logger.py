@@ -8,9 +8,9 @@ from time import *
 import time
 import threading
 import json
-sys.path.append("../mqtt_publisher/")
+sys.path.append("mqtt_publisher/")
 import publisher
-sys.path.append("../sql_lite_logger/")
+sys.path.append("sql_lite_logger/")
 import SQL_Lite_Logger
 import utils
 import math
@@ -32,7 +32,6 @@ class GpsdMannager(threading.Thread):
             self.data['longitude']=self.gpsd_thread.data_stream.lon
             self.data['speed']=self.gpsd_thread.data_stream.speed
             self.data['altitude']=self.gpsd_thread.data_stream.alt
-            self.data['satellites']=self.gpsd_thread.data_stream.satellites
             time.sleep(0.05)
     def fix(self):
         return self.gpsd.fix
