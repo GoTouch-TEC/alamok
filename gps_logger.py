@@ -15,32 +15,19 @@ import SQL_Lite_Logger
 import utils
 import math
 
-class GpsdMannager(threading.Thread):
+class GpsdMannager():
     def __init__(self):
         self.gpsd_thread=AGPS3mechanism()
         self.gpsd_thread.stream_data()
-        self.running = False
-        threading.Thread.__init__(self)
-        self.start()
+        self.gpsd_thread.run_thread()
         self.data={'latitude':0,'longitude':0,'speed':0,'altitude':0}
 
-    def run(self):
-        self.running=True
-        self.gpsd_thread.run_thread()
-        while self.running:
-            self.data['latitude']=self.gpsd_thread.data_stream.lat
-            self.data['longitude']=self.gpsd_thread.data_stream.lon
-            self.data['speed']=self.gpsd_thread.data_stream.speed
-            self.data['altitude']=self.gpsd_thread.data_stream.alt
-            time.sleep(0.05)
-    def fix(self):
-        return self.gpsd.fix
-    def utc(self):
-        return self.gpsd.utc
-    def satellites(self):
-        return self.gpsd.satellites
-    def stop(self):
-        self.running=False
+    def data(self):
+        self.data['latitude']=self.gpsd_thread.data_stream.lat
+        self.data['longitude']=self.gpsd_thread.data_stream.lon
+        self.data['speed']=self.gpsd_thread.data_stream.speed
+        self.data['altitude']=self.gpsd_thread.data_stream.alt
+        return self.data
 
 class GpsLogger(threading.Thread):
     def __init__(self, mqtt_config, db_filename, device_id="Alamok" ,refresh_time=3):
@@ -68,20 +55,23 @@ class GpsLogger(threading.Thread):
         self.publisher.start()
         self.running=True
         while (self.running):
-            if(not self.publisher.status()):
-                self.publisher.start()
-            # data = {'deviceId':self.device_id,'date': utils.getTime(),'latitude': self.gpsd.data["latitude"], 'longitude': self.gpsd.data["longitude"] ,'speed': self.gpsd.fix().speed, 'altitude': self.gpsd.fix().altitude}
-            data =  self.gpsd.data
-            data['deviceId']=self.device_id
-            data['date']=utils.getTime()
-            if(data['latitude']!="n/a"):
-                message_id = -1
-                if (self.publisher.status()):
-                    message_id = self.publisher.publish_data(str(data))
-                self.logger.backup(data, message_id)
-            else:
-                self.debug("GPS data error:", data)
-            time.sleep(self.refresh_time)
+            try:
+                if(not self.publisher.status()):
+                    self.publisher.start()
+                # data = {'deviceId':self.device_id,'date': utils.getTime(),'latitude': self.gpsd.data["latitude"], 'longitude': self.gpsd.data["longitude"] ,'speed': self.gpsd.fix().speed, 'altitude': self.gpsd.fix().altitude}
+                data =  self.gpsd.data
+                data['deviceId']=self.device_id
+                data['date']=utils.getTime()
+                if(data['latitude']!="n/a"):
+                    message_id = -1
+                    if (self.publisher.status()):
+                        message_id = self.publisher.publish_data(str(data))
+                    self.logger.backup(data, message_id)
+                else:
+                    self.debug("GPS data error:", data)
+                time.sleep(self.refresh_time)
+            except Exception as error:
+                self.debug("Error:",error)
+
     def stop(self):
-        self.gpsd.stop()
         self.running=False
