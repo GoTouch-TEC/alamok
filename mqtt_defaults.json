@@ -1,0 +1,11 @@
+{
+	"broker_address": "",
+  "broker_port": 1883,
+	"out_topic": "",
+	"in_topic":"",
+  "username": "",
+  "password": "",
+  "topic": "",
+	"device_id": "",
+	"refresh_time": 2
+}
