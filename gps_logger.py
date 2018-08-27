@@ -4,15 +4,23 @@ import math
 import time
 import threading
 import json
+import datetime
 
 from gps3.agps3threaded import AGPS3mechanism
-sys.path.append("mqtt_publisher/")
-import publisher
-sys.path.append("sql_lite_logger/")
-import SQL_Lite_Logger
-import utils
+from sql_lite_logger.SQL_Lite_Logger import SQL_Lite_Logger
+from mqtt_publisher.publisher import Publisher
+# sys.path.append("mqtt_publisher/")
+# import publisher
+# # sys.path.append("sql_lite_logger/")
+# import SQL_Lite_Logger
+# import utils
 
-
+def getTime():
+	#get the current time.
+	new_date_key = str(datetime.datetime.now())
+	new_date_key = new_date_key.replace(' ','T')#Setting ISO name fiel
+	new_date_key += 'Z' # append to the end
+	return new_date_key
 
 class GpsdMannager():
     def __init__(self):
@@ -39,9 +47,9 @@ class GpsLogger(threading.Thread):
         self.device_id = config["device_id"]
         threading.Thread.__init__(self)
 
-        self.logger = SQL_Lite_Logger.SQL_Lite_Logger(db_filename)
+        self.logger = SQL_Lite_Logger(db_filename)
 
-        self.publisher = publisher.Publisher(broker_address=config["broker_address"],
+        self.publisher = Publisher(broker_address=config["broker_address"],
                                              broker_port=config["broker_port"], out_topic=config["out_topic"],
                                              in_topic=config["in_topic"], username=config["username"],
                                              password=config["password"], device_id=config["device_id"],
@@ -66,7 +74,7 @@ class GpsLogger(threading.Thread):
                     self.publisher.start()
                 data = self.gpsd.data()
                 data['deviceId'] = self.device_id
-                data['date'] = utils.getTime()
+                data['date'] = getTime()
                 if(data['latitude'] != "n/a"):
                     message_id = -1
                     if (self.publisher.status()):
