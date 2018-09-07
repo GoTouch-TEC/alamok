@@ -9,12 +9,8 @@ import datetime
 from gps3.agps3threaded import AGPS3mechanism
 from sql_lite_logger.SQL_Lite_Logger import SQL_Lite_Logger
 from mqtt_publisher.publisher import Publisher
-# sys.path.append("mqtt_publisher/")
-# import publisher
-# # sys.path.append("sql_lite_logger/")
-# import SQL_Lite_Logger
-# import utils
 
+# TODO: Obtain the date from the gps
 def getTime():
 	#get the current time.
 	new_date_key = str(datetime.datetime.now())
