@@ -70,7 +70,7 @@ class GpsLogger(threading.Thread):
                     self.publisher.start()
                 data = self.gpsd.data()
                 data['deviceId'] = self.device_id
-                data['date'] = getTime()
+                data['datestamp'] = getTime()
                 if(data['latitude'] != "n/a"):
                     message_id = -1
                     if (self.publisher.status()):
