@@ -6,7 +6,7 @@ import threading #MultiThreading
 # 1: successful
 # 2: in_progress
 # 3: failed
-
+# TODO: remove message_id as a atribute
 
 class SQL_Lite_Logger:
 
@@ -18,25 +18,25 @@ class SQL_Lite_Logger:
 		self.lock = threading.Lock()
 
 		try:
-			sql = '''CREATE TABLE locations (datestamp text, latitude real, longitude real, speed real, altitude real, message_id int, status int, PRIMARY KEY(datestamp)) '''
+			sql = '''CREATE TABLE locations (date text, latitude real, longitude real, speed real, altitude real, status int, PRIMARY KEY(date)) '''
 			self.cursor.execute(sql)
 
 		except sqlite3.OperationalError:
 			print("Table already exists so table will not be created")
-			self.move_to_failed()
+			self.mark_as_failed()
 		self.connection.commit()
 
-	#{ 'datestamp': 'string'
+	#{ 'date': 'string'
 	#  'latitude': 'double number'
 	#  'longitude': 'double number'
 	#  'altitude': 'double number'
 	#  'speed'   : 'double number'}
-	def backup(self, data, message_id=0):
+	def backup(self, data):
+		# TODO: add status from gps_logger
 		if (data is not None):
-			data["status"]=2
-			data["message_id"]=message_id
-			sql = 		''' INSERT INTO locations (datestamp, latitude, longitude, speed, altitude, message_id, status)
-						VALUES(:datestamp, :latitude, :longitude, :speed, :altitude, :message_id, :status) '''
+			# data["message_id"]=message_id
+			sql = 		''' INSERT INTO locations (date, latitude, longitude, speed, altitude, status)
+						VALUES(:date, :latitude, :longitude, :speed, :altitude, :status) '''
 			self.lock.acquire()
 			self.cursor.execute(sql,data)
 			self.connection.commit()
@@ -44,14 +44,17 @@ class SQL_Lite_Logger:
 		else:
 			self.debug("Param data is null")
 
-	def move_to_successful(self,message_id):
-		sql = ''' UPDATE locations SET status = ? WHERE message_id = ?'''
+	def mark_as_successful(self, dates):
+		task = []
+		for date in dates:
+			task.append(	(1,date)	)
+		sql = ''' UPDATE locations SET status = ? WHERE date = ?'''
 		self.lock.acquire()
-		self.cursor.execute(sql, (1, message_id))
+		self.cursor.executemany(sql, task)
 		self.connection.commit()
 		self.lock.release()
 
-	def move_to_failed(self):
+	def mark_as_failed(self):
 		sql = ''' UPDATE locations SET status = ? WHERE status = ?'''
 		self.lock.acquire()
 		self.cursor.execute(sql, (2, 3))

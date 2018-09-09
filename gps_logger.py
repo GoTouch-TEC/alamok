@@ -31,16 +31,17 @@ class GpsdMannager():
         current_data['longitude'] = self.gpsd_thread.data_stream.lon
         current_data['speed'] = self.gpsd_thread.data_stream.speed
         current_data['altitude'] = self.gpsd_thread.data_stream.alt
-        # print("CURRENT DATA:", current_data);
         return current_data
 
-
+# TODO: remove message_id in Logger functions
 class GpsLogger(threading.Thread):
     def __init__(self, config, db_filename):
         self.gpsd = GpsdMannager()
         self.running = False
         self.refresh_time = config["refresh_time"]
         self.device_id = config["device_id"]
+		self.in_progress={}
+		self.completed=[]
         threading.Thread.__init__(self)
 
         self.logger = SQL_Lite_Logger(db_filename)
@@ -52,8 +53,8 @@ class GpsLogger(threading.Thread):
                                              on_publish=self.on_publish)
 
     def on_publish(self, client, userdata, message_id):
-        self.debug("moved to successful:", message_id)
-        self.logger.move_to_successful(message_id)
+        self.debug("mark as successful:", message_id, self.in_progress[message_id])
+		self.successful.append(	self.in_progress.pop(message_id))
 
     def debug(self, *params):
         if(__debug__):
@@ -66,18 +67,23 @@ class GpsLogger(threading.Thread):
         self.running = True
         while (self.running):
             try:
-                if(not self.publisher.status()):
-                    self.publisher.start()
-                data = self.gpsd.data()
+				data = self.gpsd.data()
                 data['deviceId'] = self.device_id
-                data['datestamp'] = getTime()
-                if(data['latitude'] != "n/a"):
-                    message_id = -1
+                data['date'] = getTime()
+				data['status'] = 3
+				if(data['latitude'] != "n/a"):
                     if (self.publisher.status()):
+						data['status']=2
                         message_id = self.publisher.publish_data(str(data))
-                    self.logger.backup(data, message_id)
+						self.in_progress[message_id]= data['date']
+					else:
+						self.publisher.start()
+                    self.logger.backup(data)
                 else:
                     self.debug("GPS data error:", data)
+				if(self.completed):
+					self.logger.mark_as_successful(self.completed)
+					self.completed.clear()
                 time.sleep(self.refresh_time)
             except Exception as error:
                 print("Error:", error)
