@@ -33,7 +33,6 @@ class GpsdMannager():
         current_data['altitude'] = self.gpsd_thread.data_stream.alt
         return current_data
 
-# TODO: remove message_id in Logger functions
 class GpsLogger(threading.Thread):
     def __init__(self, config, db_filename):
         self.gpsd = GpsdMannager()
@@ -54,7 +53,7 @@ class GpsLogger(threading.Thread):
                                              on_publish=self.on_publish)
 
     def on_publish(self, client, userdata, message_id):
-        self.debug("mark as successful:", message_id, self.in_progress[message_id])
+        # self.debug("mark as successful:", message_id, self.in_progress[message_id])
 		self.successful.append(	self.in_progress.pop(message_id))
 
 	def resend_failed():

@@ -6,7 +6,6 @@ import threading #MultiThreading
 # 1: successful
 # 2: in_progress
 # 3: failed
-# TODO: remove message_id as a atribute
 
 class SQL_Lite_Logger:
 
@@ -32,7 +31,6 @@ class SQL_Lite_Logger:
 	#  'altitude': 'double number'
 	#  'speed'   : 'double number'}
 	def backup(self, data):
-		# TODO: add status from gps_logger
 		if (data is not None):
 			# data["message_id"]=message_id
 			sql = 		''' INSERT INTO locations (date, latitude, longitude, speed, altitude, status)
