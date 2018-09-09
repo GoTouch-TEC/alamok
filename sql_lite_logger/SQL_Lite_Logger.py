@@ -24,6 +24,7 @@ class SQL_Lite_Logger:
 		except sqlite3.OperationalError:
 			print("Table already exists so table will not be created")
 			self.move_to_failed()
+		self.connection.commit()
 
 	#{ 'datestamp': 'string'
 	#  'latitude': 'double number'
