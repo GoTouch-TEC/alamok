@@ -26,7 +26,7 @@ class GpsdMannager():
         # self.data = {'latitude': 0, 'longitude': 0, 'speed': 0, 'altitude': 0}
 
     def data(self):
-        current_data = {'latitude': 0, 'longitude': 0, 'speed': 0, 'altitude': 0}
+        current_data = {}
         current_data['latitude'] = self.gpsd_thread.data_stream.lat
         current_data['longitude'] = self.gpsd_thread.data_stream.lon
         current_data['speed'] = self.gpsd_thread.data_stream.speed
@@ -42,6 +42,7 @@ class GpsLogger(threading.Thread):
         self.device_id = config["device_id"]
 		self.in_progress={}
 		self.completed=[]
+		self.failed_messages=True
         threading.Thread.__init__(self)
 
         self.logger = SQL_Lite_Logger(db_filename)
@@ -56,6 +57,14 @@ class GpsLogger(threading.Thread):
         self.debug("mark as successful:", message_id, self.in_progress[message_id])
 		self.successful.append(	self.in_progress.pop(message_id))
 
+	def resend_failed():
+		failed = self.logger.fetch_failed();
+		if(failed):
+			for data in failed:
+				data['status']=2
+				message_id = self.publisher.publish_data(str(data))
+				self.in_progress[message_id]= data['date']
+
     def debug(self, *params):
         if(__debug__):
             for param in params:
@@ -67,6 +76,10 @@ class GpsLogger(threading.Thread):
         self.running = True
         while (self.running):
             try:
+				if(self.failed_messages and self.publisher.status() ):
+					self.failed = False
+					self.resend_failed()
+
 				data = self.gpsd.data()
                 data['deviceId'] = self.device_id
                 data['date'] = getTime()
@@ -77,6 +90,7 @@ class GpsLogger(threading.Thread):
                         message_id = self.publisher.publish_data(str(data))
 						self.in_progress[message_id]= data['date']
 					else:
+						self.failed_messages = True
 						self.publisher.start()
                     self.logger.backup(data)
                 else:
