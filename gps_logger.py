@@ -9,12 +9,8 @@ import datetime
 from gps3.agps3threaded import AGPS3mechanism
 from sql_lite_logger.SQL_Lite_Logger import SQL_Lite_Logger
 from mqtt_publisher.publisher import Publisher
-# sys.path.append("mqtt_publisher/")
-# import publisher
-# # sys.path.append("sql_lite_logger/")
-# import SQL_Lite_Logger
-# import utils
 
+# TODO: Obtain the date from the gps
 def getTime():
 	#get the current time.
 	new_date_key = str(datetime.datetime.now())
@@ -30,14 +26,12 @@ class GpsdMannager():
         # self.data = {'latitude': 0, 'longitude': 0, 'speed': 0, 'altitude': 0}
 
     def data(self):
-        current_data = {'latitude': 0, 'longitude': 0, 'speed': 0, 'altitude': 0}
+        current_data = {}
         current_data['latitude'] = self.gpsd_thread.data_stream.lat
         current_data['longitude'] = self.gpsd_thread.data_stream.lon
         current_data['speed'] = self.gpsd_thread.data_stream.speed
         current_data['altitude'] = self.gpsd_thread.data_stream.alt
-        # print("CURRENT DATA:", current_data);
         return current_data
-
 
 class GpsLogger(threading.Thread):
     def __init__(self, config, db_filename):
@@ -45,6 +39,9 @@ class GpsLogger(threading.Thread):
         self.running = False
         self.refresh_time = config["refresh_time"]
         self.device_id = config["device_id"]
+		self.in_progress={}
+		self.completed=[]
+		self.failed_messages=True
         threading.Thread.__init__(self)
 
         self.logger = SQL_Lite_Logger(db_filename)
@@ -56,8 +53,16 @@ class GpsLogger(threading.Thread):
                                              on_publish=self.on_publish)
 
     def on_publish(self, client, userdata, message_id):
-        self.debug("moved to successful:", message_id)
-        self.logger.move_to_successful(message_id)
+        # self.debug("mark as successful:", message_id, self.in_progress[message_id])
+		self.successful.append(	self.in_progress.pop(message_id))
+
+	def resend_failed():
+		failed = self.logger.fetch_failed();
+		if(failed):
+			for data in failed:
+				data['status']=2
+				message_id = self.publisher.publish_data(str(data))
+				self.in_progress[message_id]= data['date']
 
     def debug(self, *params):
         if(__debug__):
@@ -70,18 +75,28 @@ class GpsLogger(threading.Thread):
         self.running = True
         while (self.running):
             try:
-                if(not self.publisher.status()):
-                    self.publisher.start()
-                data = self.gpsd.data()
+				if(self.failed_messages and self.publisher.status() ):
+					self.failed = False
+					self.resend_failed()
+
+				data = self.gpsd.data()
                 data['deviceId'] = self.device_id
                 data['date'] = getTime()
-                if(data['latitude'] != "n/a"):
-                    message_id = -1
+				data['status'] = 3
+				if(data['latitude'] != "n/a"):
                     if (self.publisher.status()):
+						data['status']=2
                         message_id = self.publisher.publish_data(str(data))
-                    self.logger.backup(data, message_id)
+						self.in_progress[message_id]= data['date']
+					else:
+						self.failed_messages = True
+						self.publisher.start()
+                    self.logger.backup(data)
                 else:
                     self.debug("GPS data error:", data)
+				if(self.completed):
+					self.logger.mark_as_successful(self.completed)
+					self.completed.clear()
                 time.sleep(self.refresh_time)
             except Exception as error:
                 print("Error:", error)

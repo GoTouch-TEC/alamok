@@ -46,5 +46,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
-# mqtt_config = {"broker_address":"13.59.16.98","broker_port":1884,"out_topic":"fonagotouch","in_topic":"","user":"","password":"","device_id":"5b0bef47e02c5b69712dae97"}
