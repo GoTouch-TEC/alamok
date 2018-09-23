@@ -11,12 +11,6 @@ from sql_lite_logger.SQL_Lite_Logger import SQL_Lite_Logger
 from mqtt_publisher.publisher import Publisher
 
 # TODO: Obtain the date from the gps
-def getTime():
-	#get the current time.
-	new_date_key = str(datetime.datetime.now())
-	new_date_key = new_date_key.replace(' ','T')#Setting ISO name fiel
-	new_date_key += 'Z' # append to the end
-	return new_date_key
 
 class GpsdMannager():
 	def __init__(self):
@@ -31,6 +25,7 @@ class GpsdMannager():
 		current_data['longitude'] = self.gpsd_thread.data_stream.lon
 		current_data['speed'] = self.gpsd_thread.data_stream.speed
 		current_data['altitude'] = self.gpsd_thread.data_stream.alt
+		current_data['date'] = self.gpsd_thread.data_stream.time
 		return current_data
 
 class GpsLogger(threading.Thread):
@@ -83,7 +78,7 @@ class GpsLogger(threading.Thread):
 
 			data = self.gpsd.data()
 			data['deviceId'] = self.device_id
-			data['date'] = getTime()
+			# data['date'] = getTime()
 			data['status'] = 3
 			if(data['latitude'] != "n/a"):
 				if (self.publisher.status()):
