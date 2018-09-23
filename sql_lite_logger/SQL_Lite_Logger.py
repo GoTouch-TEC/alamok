@@ -1,6 +1,6 @@
 import sqlite3
 from string import Template
-import threading #MultiThreading
+# import threading #MultiThreading
 
 
 # 1: successful
@@ -10,20 +10,21 @@ import threading #MultiThreading
 class SQL_Lite_Logger:
 
 	def __init__(self, filename):
-		self.connection = sqlite3.connect(filename, check_same_thread = False)
+		self.connection = sqlite3.connect(filename)
 		self.connection.row_factory = lambda c, r: dict([(col[0], r[idx]) for idx, col in enumerate(c.description)]) # return every roy as a dictionaty
-		self.cursor = self.connection.cursor()
+		# self.cursor = self.connection.cursor()
 		self.locations_table = "locations"
-		self.lock = threading.Lock()
 
 		try:
 			sql = '''CREATE TABLE locations (date text, latitude real, longitude real, speed real, altitude real, status int, PRIMARY KEY(date)) '''
-			self.cursor.execute(sql)
+			cursor = self.connection.cursor()
+			cursor.execute(sql)
 
 		except sqlite3.OperationalError:
 			print("Table already exists so table will not be created")
-			self.mark_as_failed()
 		self.connection.commit()
+
+		self.mark_as_failed()
 
 	#{ 'date': 'string'
 	#  'latitude': 'double number'
@@ -35,10 +36,9 @@ class SQL_Lite_Logger:
 			# data["message_id"]=message_id
 			sql = 		''' INSERT INTO locations (date, latitude, longitude, speed, altitude, status)
 						VALUES(:date, :latitude, :longitude, :speed, :altitude, :status) '''
-			self.lock.acquire()
-			self.cursor.execute(sql,data)
+			cursor = self.connection.cursor()
+			cursor.execute(sql,data)
 			self.connection.commit()
-			self.lock.release()
 		else:
 			self.debug("Param data is null")
 
@@ -47,17 +47,15 @@ class SQL_Lite_Logger:
 		for date in dates:
 			task.append(	(1,date)	)
 		sql = ''' UPDATE locations SET status = ? WHERE date = ?'''
-		self.lock.acquire()
-		self.cursor.executemany(sql, task)
+		cursor = self.connection.cursor()
+		cursor.executemany(sql, task)
 		self.connection.commit()
-		self.lock.release()
 
 	def mark_as_failed(self):
 		sql = ''' UPDATE locations SET status = ? WHERE status = ?'''
-		self.lock.acquire()
-		self.cursor.execute(sql, (2, 3))
+		cursor = self.connection.cursor()
+		cursor.execute(sql, (3, 2))
 		self.connection.commit()
-		self.lock.release()
 
 	def close(self):
 		print("Close BackUp Data Base")
@@ -77,19 +75,17 @@ class SQL_Lite_Logger:
 
 	def fetch(self, status):
 		result = []
-		self.lock.acquire()
-		self.cursor.execute('''SELECT * FROM locations WHERE status=?''', (status,))
-		data = self.cursor.fetchall()
-		self.lock.release()
+		cursor = self.connection.cursor()
+		cursor.execute('''SELECT * FROM locations WHERE status=?''', (status,))
+		data = cursor.fetchall()
 		return data
 
 	def clear(self):
 			sql = "DROP TABLE locations"
 			try:
-				self.lock.acquire()
-				self.cursor.execute(sql)
+				cursor = self.connection.cursor()
+				cursor.execute(sql)
 				self.connection.commit()
-				self.lock.release()
 			except RuntimeError:
 				print("Error during deletion of data base")
 	def close_logger(self):
