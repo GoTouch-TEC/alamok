@@ -4,6 +4,7 @@ import gps_logger
 import sys
 import getopt
 import json
+import time
 
 
 def main(argv):
@@ -37,7 +38,7 @@ def main(argv):
 
     try:
         while (True):
-            pass
+            time.sleep(0.1)
     except(KeyboardInterrupt, SystemExit,Exception ) as error:
         gps_log.stop()
         print(error)
