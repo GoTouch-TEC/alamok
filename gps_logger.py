@@ -45,7 +45,6 @@ class GpsLogger(threading.Thread):
 									password=config["password"], device_id=config["device_id"],
 									on_publish=self.on_publish)
 
-
 	def on_publish(self, client, userdata, message_id):
 		# self.debug("mark as successful:", message_id, self.in_progress[message_id])
 		self.completed.append(	self.in_progress.pop(message_id))
@@ -56,6 +55,7 @@ class GpsLogger(threading.Thread):
 		if(failed):
 			for data in failed:
 				data['status']=2
+				data['deviceId'] = self.device_id
 				message_id = self.publisher.publish_data(str(data))
 				self.in_progress[message_id]= data['date']
 
