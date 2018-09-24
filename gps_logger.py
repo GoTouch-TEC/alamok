@@ -10,7 +10,9 @@ from gps3.agps3threaded import AGPS3mechanism
 from sql_lite_logger.SQL_Lite_Logger import SQL_Lite_Logger
 from mqtt_publisher.publisher import Publisher
 
+
 # TODO: Obtain the date from the gps
+
 
 class GpsdMannager():
 	def __init__(self):
@@ -49,7 +51,6 @@ class GpsLogger(threading.Thread):
 	def on_publish(self, client, userdata, message_id):
 		# self.debug("mark as successful:", message_id, self.in_progress[message_id])
 		self.completed.append(	self.in_progress.pop(message_id))
-
 	def resend_failed(self):
 		failed = self.logger.fetch_failed();
 		print("failed: ", failed)
@@ -65,6 +66,7 @@ class GpsLogger(threading.Thread):
 				print(param, end=' ')
 				print("")
 
+
 	def run(self):
 		self.logger = SQL_Lite_Logger(self.db_filename)
 		self.publisher.start()
@@ -75,6 +77,7 @@ class GpsLogger(threading.Thread):
 			if(self.failed_messages and self.publisher.status() ):
 				self.failed_messages = False
 				self.resend_failed()
+
 
 			data = self.gpsd.data()
 			data['deviceId'] = self.device_id
